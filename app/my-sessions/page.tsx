@@ -5,25 +5,42 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getSessionsByEmail, validateEmail } from "@/lib/utils";
+import { getSessionsByEmailAndPassword, validateEmail } from "@/lib/utils";
 import { Session } from "@/lib/types";
 import { Heart, Calendar, Users, ArrowRight } from "lucide-react";
 
 export default function MySessionsPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = () => {
-    if (!email.trim() || !validateEmail(email)) {
+  const handleSearch = async () => {
+    if (!email.trim() || !password.trim()) {
+      alert("Please enter both email and password");
+      return;
+    }
+    if (!validateEmail(email)) {
       alert("Please enter a valid email address");
       return;
     }
 
-    const userSessions = getSessionsByEmail(email);
-    setSessions(userSessions);
-    setSearched(true);
+    setLoading(true);
+    try {
+      const userSessions = await getSessionsByEmailAndPassword(email, password);
+      setSessions(userSessions);
+      setSearched(true);
+      
+      if (userSessions.length === 0) {
+        alert("No sessions found. Please check your email and password.");
+      }
+    } catch (error) {
+      alert("Error retrieving sessions. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -68,15 +85,27 @@ export default function MySessionsPage() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Password</label>
+              <Input
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               />
+              <p className="text-xs text-gray-500">
+                Enter the password you created when starting your session
+              </p>
             </div>
             <Button
               onClick={handleSearch}
-              disabled={!email.trim()}
+              disabled={!email.trim() || !password.trim() || loading}
               className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
             >
-              Find My Sessions
+              {loading ? "Searching..." : "Find My Sessions"}
             </Button>
             <Button
               onClick={() => router.push("/")}
@@ -89,79 +118,64 @@ export default function MySessionsPage() {
         </Card>
 
         {/* Sessions List */}
-        {searched && (
+        {searched && sessions.length > 0 && (
           <div className="space-y-4">
-            {sessions.length === 0 ? (
-              <Card className="shadow-xl">
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-600">
-                    No sessions found for this email address.
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Make sure you entered the same email you used when creating your session.
-                  </p>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Your Sessions ({sessions.length})
+            </h2>
+            {sessions.map((session) => (
+              <Card
+                key={session.id}
+                className="shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
+                onClick={() => {
+                  const partner = session.sessionType === "solo" ? "solo" : "1";
+                  router.push(`/session/${session.id}?partner=${partner}`);
+                }}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {session.sessionType === "couple" ? (
+                          <Users className="w-5 h-5 text-purple-500" />
+                        ) : (
+                          <Heart className="w-5 h-5 text-pink-500" />
+                        )}
+                        <h3 className="text-lg font-bold text-gray-800">
+                          {session.sessionType === "couple"
+                            ? "Couple Assessment"
+                            : "Solo Assessment"}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {session.partner1Name}
+                        {session.sessionType === "couple" &&
+                          session.partner2Name &&
+                          ` & ${session.partner2Name}`}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {formatDate(session.createdAt)}
+                        </div>
+                        <div>
+                          {session.completed ? (
+                            <span className="text-green-600 font-medium">
+                              ✓ Completed
+                            </span>
+                          ) : (
+                            <span className="text-orange-600 font-medium">
+                              {getSessionProgress(session)}% Complete
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-gray-400" />
+                  </div>
                 </CardContent>
               </Card>
-            ) : (
-              <>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">
-                  Your Sessions ({sessions.length})
-                </h2>
-                {sessions.map((session) => (
-                  <Card
-                    key={session.id}
-                    className="shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
-                    onClick={() => {
-                      const partner = session.sessionType === "solo" ? "solo" : "1";
-                      router.push(`/session/${session.id}?partner=${partner}`);
-                    }}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            {session.sessionType === "couple" ? (
-                              <Users className="w-5 h-5 text-purple-500" />
-                            ) : (
-                              <Heart className="w-5 h-5 text-pink-500" />
-                            )}
-                            <h3 className="text-lg font-bold text-gray-800">
-                              {session.sessionType === "couple"
-                                ? "Couple Assessment"
-                                : "Solo Assessment"}
-                            </h3>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {session.partner1Name}
-                            {session.sessionType === "couple" &&
-                              session.partner2Name &&
-                              ` & ${session.partner2Name}`}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {formatDate(session.createdAt)}
-                            </div>
-                            <div>
-                              {session.completed ? (
-                                <span className="text-green-600 font-medium">
-                                  ✓ Completed
-                                </span>
-                              ) : (
-                                <span className="text-orange-600 font-medium">
-                                  {getSessionProgress(session)}% Complete
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-6 h-6 text-gray-400" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </>
-            )}
+            ))}
           </div>
         )}
       </div>

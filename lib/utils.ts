@@ -203,3 +203,47 @@ export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
+
+// Simple password hashing (client-side only, for basic security)
+// In production, this should be done server-side with proper bcrypt/argon2
+export async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  const passwordHash = await hashPassword(password);
+  return passwordHash === hash;
+}
+
+export async function getSessionsByEmailAndPassword(email: string, password: string): Promise<Session[]> {
+  if (typeof window !== "undefined") {
+    const emailKey = `user_sessions_${email.toLowerCase()}`;
+    const sessionIdsData = localStorage.getItem(emailKey);
+    
+    if (!sessionIdsData) return [];
+    
+    const sessionIds: string[] = JSON.parse(sessionIdsData);
+    const sessions: Session[] = [];
+    
+    for (const id of sessionIds) {
+      const session = loadSession(id);
+      if (session && session.passwordHash) {
+        const isValid = await verifyPassword(password, session.passwordHash);
+        if (isValid) {
+          sessions.push(session);
+        }
+      }
+    }
+    
+    // Sort by creation date, newest first
+    return sessions.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+  return [];
+}

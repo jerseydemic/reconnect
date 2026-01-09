@@ -28,6 +28,7 @@ export interface Session {
     lastTaskUpdate?: string;
     createdAt: string;
     userEmail?: string; // For session persistence and retrieval
+    passwordHash?: string; // For session security
 }
 
 export interface AnalysisResult {

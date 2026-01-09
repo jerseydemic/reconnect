@@ -6,7 +6,7 @@ import { Heart, Users, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { generateSessionId, saveSession, validateEmail } from "@/lib/utils";
+import { generateSessionId, saveSession, validateEmail, hashPassword } from "@/lib/utils";
 import { Session } from "@/lib/types";
 
 export default function Home() {
@@ -14,15 +14,21 @@ export default function Home() {
   const [mode, setMode] = useState<"start" | "create" | "join" | "solo">("start");
   const [partner1Name, setPartner1Name] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [sessionCode, setSessionCode] = useState("");
 
-  const handleCreateSession = () => {
-    if (!partner1Name.trim() || !userEmail.trim()) return;
+  const handleCreateSession = async () => {
+    if (!partner1Name.trim() || !userEmail.trim() || !password.trim()) return;
     if (!validateEmail(userEmail)) {
       alert("Please enter a valid email address");
       return;
     }
+    if (password.length < 4) {
+      alert("Password must be at least 4 characters");
+      return;
+    }
 
+    const passwordHash = await hashPassword(password);
     const sessionId = generateSessionId();
     const newSession: Session = {
       id: sessionId,
@@ -37,20 +43,26 @@ export default function Home() {
       subscriptionTier: "free",
       taskProgress: {},
       createdAt: new Date().toISOString(),
-      userEmail: userEmail.trim().toLowerCase()
+      userEmail: userEmail.trim().toLowerCase(),
+      passwordHash
     };
 
     saveSession(newSession);
     router.push(`/session/${sessionId}?partner=1`);
   };
 
-  const handleCreateSoloSession = () => {
-    if (!partner1Name.trim() || !userEmail.trim()) return;
+  const handleCreateSoloSession = async () => {
+    if (!partner1Name.trim() || !userEmail.trim() || !password.trim()) return;
     if (!validateEmail(userEmail)) {
       alert("Please enter a valid email address");
       return;
     }
+    if (password.length < 4) {
+      alert("Password must be at least 4 characters");
+      return;
+    }
 
+    const passwordHash = await hashPassword(password);
     const sessionId = generateSessionId();
     const newSession: Session = {
       id: sessionId,
@@ -65,7 +77,8 @@ export default function Home() {
       subscriptionTier: "free",
       taskProgress: {},
       createdAt: new Date().toISOString(),
-      userEmail: userEmail.trim().toLowerCase()
+      userEmail: userEmail.trim().toLowerCase(),
+      passwordHash
     };
 
     saveSession(newSession);
@@ -186,14 +199,24 @@ export default function Home() {
                       placeholder="your@email.com"
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleCreateSession()}
                     />
                     <p className="text-xs text-gray-500">We'll use this to save your session</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Password</label>
+                    <Input
+                      type="password"
+                      placeholder="Create a password (min 4 characters)"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleCreateSession()}
+                    />
+                    <p className="text-xs text-gray-500">Protects your session from unauthorized access</p>
                   </div>
                 </div>
                 <Button
                   onClick={handleCreateSession}
-                  disabled={!partner1Name.trim() || !userEmail.trim()}
+                  disabled={!partner1Name.trim() || !userEmail.trim() || !password.trim()}
                   className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                 >
                   Create Couple Session
@@ -226,9 +249,19 @@ export default function Home() {
                       placeholder="your@email.com"
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleCreateSoloSession()}
                     />
                     <p className="text-xs text-gray-500">We'll use this to save your session</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Password</label>
+                    <Input
+                      type="password"
+                      placeholder="Create a password (min 4 characters)"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleCreateSoloSession()}
+                    />
+                    <p className="text-xs text-gray-500">Protects your session from unauthorized access</p>
                   </div>
                 </div>
                 <div className="p-3 bg-blue-50 rounded-lg text-sm text-gray-600">
@@ -239,7 +272,7 @@ export default function Home() {
                 </div>
                 <Button
                   onClick={handleCreateSoloSession}
-                  disabled={!partner1Name.trim() || !userEmail.trim()}
+                  disabled={!partner1Name.trim() || !userEmail.trim() || !password.trim()}
                   className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                 >
                   Start Solo Assessment
