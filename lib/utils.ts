@@ -1,0 +1,163 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { Session, Answer, AnalysisResult } from "./types";
+import { QUESTIONS } from "./questions";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function generateSessionId(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+export function upgradeToPremium(sessionId: string): void {
+    const session = loadSession(sessionId);
+    if (session) {
+        session.paid = true;
+        session.subscriptionTier = "premium";
+        session.subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+        saveSession(session);
+    }
+}
+
+export function checkSubscriptionStatus(sessionId: string): boolean {
+    const session = loadSession(sessionId);
+    if (!session || session.subscriptionTier === "free") return false;
+    
+    // Check if subscription has expired
+    if (session.subscriptionExpiry) {
+        const expiry = new Date(session.subscriptionExpiry);
+        if (expiry < new Date()) {
+            // Subscription expired, downgrade to free
+            session.subscriptionTier = "free";
+            session.paid = false;
+            saveSession(session);
+            return false;
+        }
+    }
+    
+    return session.paid && session.subscriptionTier === "premium";
+}
+
+
+export function calculateAnalysis(
+  partner1Answers: Answer[],
+  partner2Answers: Answer[]
+): AnalysisResult {
+  const categoryScores: Record<string, { matches: number; total: number }> = {
+    communication: { matches: 0, total: 0 },
+    trust: { matches: 0, total: 0 },
+    intimacy: { matches: 0, total: 0 },
+    future: { matches: 0, total: 0 },
+    conflict: { matches: 0, total: 0 },
+    quality_time: { matches: 0, total: 0 }
+  };
+
+  let totalMatches = 0;
+  let totalQuestions = partner1Answers.length;
+
+  partner1Answers.forEach((answer, index) => {
+    const partner2Answer = partner2Answers[index];
+    const question = QUESTIONS.find(q => q.id === answer.questionId);
+
+    if (question && partner2Answer) {
+      const category = question.category;
+      categoryScores[category].total++;
+
+      if (answer.response === partner2Answer.response) {
+        categoryScores[category].matches++;
+        totalMatches++;
+      }
+    }
+  });
+
+  const compatibilityScore = Math.round((totalMatches / totalQuestions) * 100);
+
+  const categoryPercentages = Object.entries(categoryScores).reduce(
+    (acc, [category, { matches, total }]) => ({
+      ...acc,
+      [category]: total > 0 ? Math.round((matches / total) * 100) : 0
+    }),
+    {} as Record<string, number>
+  );
+
+  const problemAreas = Object.entries(categoryPercentages)
+    .filter(([_, score]) => score < 50)
+    .map(([category]) => category.replace(/_/g, " "))
+    .sort((a, b) => categoryPercentages[a] - categoryPercentages[b]);
+
+  return {
+    compatibilityScore,
+    categoryScores: categoryPercentages as any,
+    matches: totalMatches,
+    mismatches: totalQuestions - totalMatches,
+    problemAreas
+  };
+}
+
+export function calculateSoloAnalysis(answers: Answer[]): AnalysisResult {
+  const categoryScores: Record<string, { positive: number; total: number }> = {
+    communication: { positive: 0, total: 0 },
+    trust: { positive: 0, total: 0 },
+    intimacy: { positive: 0, total: 0 },
+    future: { positive: 0, total: 0 },
+    conflict: { positive: 0, total: 0 },
+    quality_time: { positive: 0, total: 0 }
+  };
+
+  let totalPositive = 0;
+  let totalQuestions = answers.length;
+
+  answers.forEach((answer) => {
+    const question = QUESTIONS.find(q => q.id === answer.questionId);
+
+    if (question) {
+      const category = question.category;
+      categoryScores[category].total++;
+
+      // Right swipe = positive response
+      if (answer.response === "right") {
+        categoryScores[category].positive++;
+        totalPositive++;
+      }
+    }
+  });
+
+  const overallScore = Math.round((totalPositive / totalQuestions) * 100);
+
+  const categoryPercentages = Object.entries(categoryScores).reduce(
+    (acc, [category, { positive, total }]) => ({
+      ...acc,
+      [category]: total > 0 ? Math.round((positive / total) * 100) : 0
+    }),
+    {} as Record<string, number>
+  );
+
+  const problemAreas = Object.entries(categoryPercentages)
+    .filter(([_, score]) => score < 50)
+    .map(([category]) => category.replace(/_/g, " "))
+    .sort((a, b) => categoryPercentages[a] - categoryPercentages[b]);
+
+  return {
+    compatibilityScore: overallScore,
+    categoryScores: categoryPercentages as any,
+    matches: totalPositive,
+    mismatches: totalQuestions - totalPositive,
+    problemAreas
+  };
+}
+
+export function saveSession(session: Session): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(`session_${session.id}`, JSON.stringify(session));
+  }
+}
+
+export function loadSession(sessionId: string): Session | null {
+  if (typeof window !== "undefined") {
+    const data = localStorage.getItem(`session_${sessionId}`);
+    return data ? JSON.parse(data) : null;
+  }
+  return null;
+}
