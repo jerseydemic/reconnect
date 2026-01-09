@@ -8,8 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Session, AnalysisResult } from "@/lib/types";
 import { loadSession, calculateAnalysis, calculateSoloAnalysis } from "@/lib/utils";
-import { Heart, TrendingUp, TrendingDown, AlertCircle, ArrowRight, Lock } from "lucide-react";
-import { PaymentModal } from "@/components/PaymentModal";
+import { Heart, TrendingUp, TrendingDown, AlertCircle, ArrowRight } from "lucide-react";
 
 export default function ResultsPage() {
     const params = useParams();
@@ -20,7 +19,6 @@ export default function ResultsPage() {
 
     const [session, setSession] = useState<Session | null>(null);
     const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     useEffect(() => {
         const loadedSession = loadSession(sessionId);
@@ -231,59 +229,13 @@ export default function ResultsPage() {
                 </Card>
 
                 {/* CTA */}
-                {session.paid ? (
-                    <Button
-                        onClick={() => router.push(`/tasks/${sessionId}`)}
-                        className="w-full h-14 text-lg bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                    >
-                        View Healing Tasks
-                        <ArrowRight className="ml-2 w-5 h-5" />
-                    </Button>
-                ) : (
-                    <div className="relative">
-                        {/* Blurred Preview */}
-                        <div className="relative overflow-hidden rounded-lg border-2 border-purple-300 mb-4">
-                            <div className="blur-sm p-6 bg-white select-none pointer-events-none">
-                                <h3 className="font-bold text-lg mb-4">Your Personalized Healing Tasks</h3>
-                                <div className="space-y-3">
-                                    <div className="h-16 bg-gray-200 rounded"></div>
-                                    <div className="h-16 bg-gray-200 rounded"></div>
-                                    <div className="h-16 bg-gray-200 rounded"></div>
-                                </div>
-                            </div>
-                            {/* Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-                                <div className="text-center text-white">
-                                    <Lock className="w-12 h-12 mx-auto mb-2" />
-                                    <p className="font-semibold text-lg">Unlock Your Healing Plan</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <Button
-                            onClick={() => setShowPaymentModal(true)}
-                            className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                        >
-                            <Lock className="mr-2 w-5 h-5" />
-                            Unlock for $3.99
-                        </Button>
-                    </div>
-                )}
-
-                {/* Payment Modal */}
-                <PaymentModal
-                    open={showPaymentModal}
-                    onClose={() => setShowPaymentModal(false)}
-                    onSuccess={() => {
-                        setShowPaymentModal(false);
-                        // Reload session to get updated paid status
-                        const updatedSession = loadSession(sessionId);
-                        if (updatedSession) {
-                            setSession(updatedSession);
-                        }
-                    }}
-                    sessionId={sessionId}
-                />
+                <Button
+                    onClick={() => router.push(`/tasks/${sessionId}`)}
+                    className="w-full h-14 text-lg bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                >
+                    View Your Healing Tasks
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
             </div>
         </div>
     );
