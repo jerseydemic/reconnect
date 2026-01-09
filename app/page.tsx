@@ -531,6 +531,129 @@ export default function Home() {
                 >
                   Back
                 </Button>
+                <button
+                  onClick={() => setMode("forgot-password")}
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline text-center w-full mt-2"
+                >
+                  Forgot your password?
+                </button>
+              </>
+            )}
+
+            {/* Forgot Password - Step 1: Email */}
+            {mode === "forgot-password" && resetStep === "email" && (
+              <>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Enter the email address associated with your account. We&apos;ll send you a verification code.
+                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleRequestResetCode()}
+                  />
+                </div>
+                <Button
+                  onClick={handleRequestResetCode}
+                  disabled={!resetEmail.trim()}
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500"
+                >
+                  Send Verification Code
+                </Button>
+                <Button
+                  onClick={() => setMode("start")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Back
+                </Button>
+              </>
+            )}
+
+            {/* Forgot Password - Step 2: Verification Code */}
+            {mode === "forgot-password" && resetStep === "code" && (
+              <>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Enter the 6-digit verification code sent to {resetEmail}
+                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Verification Code</label>
+                  <Input
+                    type="text"
+                    placeholder="123456"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleVerifyCode()}
+                    maxLength={6}
+                    className="text-center text-2xl tracking-widest"
+                  />
+                </div>
+                <Button
+                  onClick={handleVerifyCode}
+                  disabled={!verificationCode.trim()}
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500"
+                >
+                  Verify Code
+                </Button>
+                <Button
+                  onClick={() => {
+                    setResetStep("email");
+                    setVerificationCode("");
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Back
+                </Button>
+              </>
+            )}
+
+            {/* Forgot Password - Step 3: New Password */}
+            {mode === "forgot-password" && resetStep === "password" && (
+              <>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Create a new password for your account
+                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Confirm New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleResetPassword()}
+                  />
+                </div>
+                <Button
+                  onClick={handleResetPassword}
+                  disabled={!newPassword.trim() || !confirmNewPassword.trim()}
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500"
+                >
+                  Reset Password
+                </Button>
+                <Button
+                  onClick={() => {
+                    setResetStep("code");
+                    setNewPassword("");
+                    setConfirmNewPassword("");
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Back
+                </Button>
               </>
             )}
           </CardContent>
