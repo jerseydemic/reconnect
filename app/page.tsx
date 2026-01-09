@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Users } from "lucide-react";
+import { Heart, Users, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -86,33 +86,55 @@ export default function Home() {
         <Card className="shadow-2xl">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              {mode === "start" && "Get Started"}
-              {mode === "create" && "Create Session"}
+              {mode === "start" && "Choose Your Assessment"}
+              {mode === "create" && "Couple Assessment"}
               {mode === "join" && "Join Session"}
+              {mode === "solo" && "Solo Assessment"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {mode === "start" && (
               <>
+                <div className="text-center mb-4">
+                  <p className="text-gray-600 font-medium">How would you like to assess your relationship?</p>
+                </div>
+                
                 <Button
                   onClick={() => setMode("create")}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 h-14 text-lg"
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 h-16 text-lg"
                 >
-                  <Users className="mr-2 h-5 w-5" />
-                  Start with Partner
+                  <Users className="mr-2 h-6 w-6" />
+                  <div className="text-left">
+                    <div className="font-bold">Couple Assessment</div>
+                    <div className="text-xs opacity-90">Work together with your partner</div>
+                  </div>
                 </Button>
+                
                 <Button
                   onClick={() => setMode("solo")}
                   variant="outline"
-                  className="w-full h-14 text-lg border-2 border-purple-300 hover:bg-purple-50"
+                  className="w-full h-16 text-lg border-2 border-purple-300 hover:bg-purple-50"
                 >
-                  <Heart className="mr-2 h-5 w-5" />
-                  Solo Assessment
+                  <Heart className="mr-2 h-6 w-6" />
+                  <div className="text-left">
+                    <div className="font-bold">Solo Assessment</div>
+                    <div className="text-xs opacity-75">Reflect on your own</div>
+                  </div>
                 </Button>
+                
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">or</span>
+                  </div>
+                </div>
+                
                 <Button
                   onClick={() => setMode("join")}
                   variant="outline"
-                  className="w-full h-14 text-lg"
+                  className="w-full h-12 text-base"
                 >
                   Join Partner's Session
                 </Button>
@@ -121,7 +143,7 @@ export default function Home() {
                   <p className="text-sm text-gray-600 text-center">
                     <strong>For separated married couples</strong>
                     <br />
-                    Work together or reflect solo to identify areas for healing
+                    Identify areas for healing and reconnection
                   </p>
                 </div>
               </>
@@ -223,6 +245,18 @@ export default function Home() {
         <p className="text-center text-sm text-gray-500 mt-6">
           Not a substitute for professional therapy
         </p>
+        
+        <div className="mt-4 flex justify-center">
+          <a
+            href="https://instagram.com/kingdemic"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-purple-600 transition-colors"
+          >
+            <Instagram className="w-4 h-4" />
+            Contact: @kingdemic
+          </a>
+        </div>
       </div>
     </main>
   );
