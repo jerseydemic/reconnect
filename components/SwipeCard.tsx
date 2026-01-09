@@ -1,8 +1,9 @@
 "use client";
 
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { motion, useMotionValue, useTransform, PanInfo, useAnimation } from "framer-motion";
 import { Question } from "@/lib/types";
 import { X, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface SwipeCardProps {
     question: Question;
@@ -13,14 +14,37 @@ interface SwipeCardProps {
 
 export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }: SwipeCardProps) {
     const x = useMotionValue(0);
-    const rotate = useTransform(x, [-200, 200], [-15, 15]);
-    const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
+    const controls = useAnimation();
+    const rotate = useTransform(x, [-300, 300], [-20, 20]);
+    const opacity = useTransform(x, [-300, -150, 0, 150, 300], [0, 1, 1, 1, 0]);
 
-    const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        // Reduced threshold for easier swiping on mobile
-        if (Math.abs(info.offset.x) > 80) {
-            onSwipe(info.offset.x > 0 ? "right" : "left");
+    const handleDragEnd = async (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        const swipeThreshold = 100;
+        
+        if (Math.abs(info.offset.x) > swipeThreshold) {
+            const direction = info.offset.x > 0 ? "right" : "left";
+            
+            // Animate card completely off screen
+            await controls.start({
+                x: direction === "right" ? 1000 : -1000,
+                opacity: 0,
+                transition: { duration: 0.3, ease: "easeOut" }
+            });
+            
+            onSwipe(direction);
         }
+    };
+
+    const handleButtonClick = async (direction: "left" | "right") => {
+        // Animate card off screen when button is clicked
+        await controls.start({
+            x: direction === "right" ? 1000 : -1000,
+            opacity: 0,
+            rotate: direction === "right" ? 20 : -20,
+            transition: { duration: 0.3, ease: "easeOut" }
+        });
+        
+        onSwipe(direction);
     };
 
     const getCategoryColor = (category: string) => {
@@ -36,7 +60,7 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
     };
 
     return (
-        <div className="relative w-full max-w-md mx-auto h-[420px] sm:h-[480px] md:h-[520px] perspective-1000 px-4 sm:px-0">
+        <div className="relative w-full max-w-md mx-auto h-[380px] sm:h-[420px] perspective-1000 px-4 sm:px-0">
             <motion.div
                 className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
                 style={{
@@ -44,73 +68,73 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
                     rotate,
                     opacity,
                 }}
+                animate={controls}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.8}
+                dragElastic={0.7}
                 dragTransition={{ bounceStiffness: 600, bounceDamping: 25 }}
                 onDragEnd={handleDragEnd}
                 whileTap={{ scale: 1.02 }}
             >
-                <div className="w-full h-full bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                <div className="w-full h-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
                     {/* Progress Bar */}
-                    <div className="h-1 bg-gray-100">
+                    <div className="h-1 bg-gray-100 dark:bg-gray-700">
                         <div
                             className={`h-full bg-gradient-to-r ${getCategoryColor(question.category)} transition-all duration-300`}
                             style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
                         />
                     </div>
 
-                    {/* Card Content */}
-                    <div className="flex flex-col h-full p-4 sm:p-6 md:p-8">
-                        {/* Header */}
-                        <div className="text-center mb-4 sm:mb-6">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${getCategoryColor(question.category)}`} />
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {/* Card Content - Slimmed down */}
+                    <div className="flex flex-col h-full p-5 sm:p-6">
+                        {/* Header - Compact */}
+                        <div className="text-center mb-3">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <div className={`h-1 w-1 rounded-full bg-gradient-to-r ${getCategoryColor(question.category)}`} />
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {question.category.replace(/_/g, " ")}
                                 </p>
-                                <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${getCategoryColor(question.category)}`} />
+                                <div className={`h-1 w-1 rounded-full bg-gradient-to-r ${getCategoryColor(question.category)}`} />
                             </div>
-                            <p className="text-xs sm:text-sm font-medium text-gray-400">
+                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                                 {questionNumber} of {totalQuestions}
                             </p>
                         </div>
 
-                        {/* Question */}
-                        <div className="flex-1 flex items-center justify-center">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center leading-relaxed px-2 sm:px-4">
+                        {/* Question - Centered */}
+                        <div className="flex-1 flex items-center justify-center py-4">
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 text-center leading-relaxed px-2">
                                 {question.question}
                             </h2>
                         </div>
 
-                        {/* Swipe Indicators - Compact for Mobile */}
-                        <div className="flex justify-between items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
-                            <div className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl bg-red-50 border-2 border-red-100 flex-1">
-                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-lg flex-shrink-0">
-                                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={3} />
+                        {/* Action Buttons - Clickable alternatives to swiping */}
+                        <div className="flex gap-3 mt-4">
+                            <Button
+                                onClick={() => handleButtonClick("left")}
+                                className="flex-1 h-16 bg-gradient-to-br from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all"
+                            >
+                                <div className="flex flex-col items-center gap-1">
+                                    <X className="w-5 h-5" strokeWidth={3} />
+                                    <span className="text-xs font-bold">{question.leftLabel}</span>
                                 </div>
-                                <div className="text-left min-w-0">
-                                    <p className="text-[10px] sm:text-xs font-semibold text-red-600 uppercase tracking-wide">Swipe Left</p>
-                                    <p className="text-xs sm:text-sm font-bold text-red-700 truncate">{question.leftLabel}</p>
+                            </Button>
+                            
+                            <Button
+                                onClick={() => handleButtonClick("right")}
+                                className="flex-1 h-16 bg-gradient-to-br from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all"
+                            >
+                                <div className="flex flex-col items-center gap-1">
+                                    <Check className="w-5 h-5" strokeWidth={3} />
+                                    <span className="text-xs font-bold">{question.rightLabel}</span>
                                 </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl bg-green-50 border-2 border-green-100 flex-1">
-                                <div className="text-right min-w-0">
-                                    <p className="text-[10px] sm:text-xs font-semibold text-green-600 uppercase tracking-wide">Swipe Right</p>
-                                    <p className="text-xs sm:text-sm font-bold text-green-700 truncate">{question.rightLabel}</p>
-                                </div>
-                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg flex-shrink-0">
-                                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={3} />
-                                </div>
-                            </div>
+                            </Button>
                         </div>
 
                         {/* Instruction */}
-                        <div className="mt-3 sm:mt-4 text-center">
-                            <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
-                                <span className="inline-block">👆</span>
-                                Drag or swipe to answer
+                        <div className="mt-3 text-center">
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                                Swipe or tap buttons to answer
                             </p>
                         </div>
                     </div>
@@ -118,21 +142,21 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
 
                 {/* Drag Feedback Overlays */}
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none"
+                    className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl flex items-center justify-center pointer-events-none"
                     style={{
-                        opacity: useTransform(x, [-200, -50, 0], [0.9, 0.3, 0]),
+                        opacity: useTransform(x, [-300, -100, 0], [0.9, 0.3, 0]),
                     }}
                 >
-                    <X className="w-24 h-24 sm:w-32 sm:h-32 text-white" strokeWidth={4} />
+                    <X className="w-32 h-32 text-white" strokeWidth={4} />
                 </motion.div>
 
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none"
+                    className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center pointer-events-none"
                     style={{
-                        opacity: useTransform(x, [0, 50, 200], [0, 0.3, 0.9]),
+                        opacity: useTransform(x, [0, 100, 300], [0, 0.3, 0.9]),
                     }}
                 >
-                    <Check className="w-24 h-24 sm:w-32 sm:h-32 text-white" strokeWidth={4} />
+                    <Check className="w-32 h-32 text-white" strokeWidth={4} />
                 </motion.div>
             </motion.div>
         </div>
