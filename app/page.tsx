@@ -6,17 +6,22 @@ import { Heart, Users, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { generateSessionId, saveSession } from "@/lib/utils";
+import { generateSessionId, saveSession, validateEmail } from "@/lib/utils";
 import { Session } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
   const [mode, setMode] = useState<"start" | "create" | "join" | "solo">("start");
   const [partner1Name, setPartner1Name] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [sessionCode, setSessionCode] = useState("");
 
   const handleCreateSession = () => {
-    if (!partner1Name.trim()) return;
+    if (!partner1Name.trim() || !userEmail.trim()) return;
+    if (!validateEmail(userEmail)) {
+      alert("Please enter a valid email address");
+      return;
+    }
 
     const sessionId = generateSessionId();
     const newSession: Session = {
@@ -31,7 +36,8 @@ export default function Home() {
       paid: false,
       subscriptionTier: "free",
       taskProgress: {},
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      userEmail: userEmail.trim().toLowerCase()
     };
 
     saveSession(newSession);
@@ -39,7 +45,11 @@ export default function Home() {
   };
 
   const handleCreateSoloSession = () => {
-    if (!partner1Name.trim()) return;
+    if (!partner1Name.trim() || !userEmail.trim()) return;
+    if (!validateEmail(userEmail)) {
+      alert("Please enter a valid email address");
+      return;
+    }
 
     const sessionId = generateSessionId();
     const newSession: Session = {
@@ -54,7 +64,8 @@ export default function Home() {
       paid: false,
       subscriptionTier: "free",
       taskProgress: {},
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      userEmail: userEmail.trim().toLowerCase()
     };
 
     saveSession(newSession);
@@ -138,6 +149,14 @@ export default function Home() {
                 >
                   Join Partner's Session
                 </Button>
+                
+                <Button
+                  onClick={() => router.push("/my-sessions")}
+                  variant="ghost"
+                  className="w-full text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                >
+                  Continue Previous Session
+                </Button>
 
                 <div className="mt-6 p-4 bg-purple-50 rounded-lg">
                   <p className="text-sm text-gray-600 text-center">
@@ -151,18 +170,30 @@ export default function Home() {
 
             {mode === "create" && (
               <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Your Name</label>
-                  <Input
-                    placeholder="Enter your name"
-                    value={partner1Name}
-                    onChange={(e) => setPartner1Name(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleCreateSession()}
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Your Name</label>
+                    <Input
+                      placeholder="Enter your name"
+                      value={partner1Name}
+                      onChange={(e) => setPartner1Name(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Your Email</label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleCreateSession()}
+                    />
+                    <p className="text-xs text-gray-500">We'll use this to save your session</p>
+                  </div>
                 </div>
                 <Button
                   onClick={handleCreateSession}
-                  disabled={!partner1Name.trim()}
+                  disabled={!partner1Name.trim() || !userEmail.trim()}
                   className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                 >
                   Create Couple Session
@@ -179,14 +210,26 @@ export default function Home() {
 
             {mode === "solo" && (
               <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Your Name</label>
-                  <Input
-                    placeholder="Enter your name"
-                    value={partner1Name}
-                    onChange={(e) => setPartner1Name(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleCreateSoloSession()}
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Your Name</label>
+                    <Input
+                      placeholder="Enter your name"
+                      value={partner1Name}
+                      onChange={(e) => setPartner1Name(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Your Email</label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleCreateSoloSession()}
+                    />
+                    <p className="text-xs text-gray-500">We'll use this to save your session</p>
+                  </div>
                 </div>
                 <div className="p-3 bg-blue-50 rounded-lg text-sm text-gray-600">
                   <p>
@@ -196,7 +239,7 @@ export default function Home() {
                 </div>
                 <Button
                   onClick={handleCreateSoloSession}
-                  disabled={!partner1Name.trim()}
+                  disabled={!partner1Name.trim() || !userEmail.trim()}
                   className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                 >
                   Start Solo Assessment

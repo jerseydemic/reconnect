@@ -151,6 +151,18 @@ export function calculateSoloAnalysis(answers: Answer[]): AnalysisResult {
 export function saveSession(session: Session): void {
   if (typeof window !== "undefined") {
     localStorage.setItem(`session_${session.id}`, JSON.stringify(session));
+    
+    // If session has email, index it for retrieval
+    if (session.userEmail) {
+      const emailKey = `user_sessions_${session.userEmail.toLowerCase()}`;
+      const existingSessions = localStorage.getItem(emailKey);
+      const sessionIds: string[] = existingSessions ? JSON.parse(existingSessions) : [];
+      
+      if (!sessionIds.includes(session.id)) {
+        sessionIds.push(session.id);
+        localStorage.setItem(emailKey, JSON.stringify(sessionIds));
+      }
+    }
   }
 }
 
@@ -160,4 +172,34 @@ export function loadSession(sessionId: string): Session | null {
     return data ? JSON.parse(data) : null;
   }
   return null;
+}
+
+export function getSessionsByEmail(email: string): Session[] {
+  if (typeof window !== "undefined") {
+    const emailKey = `user_sessions_${email.toLowerCase()}`;
+    const sessionIdsData = localStorage.getItem(emailKey);
+    
+    if (!sessionIdsData) return [];
+    
+    const sessionIds: string[] = JSON.parse(sessionIdsData);
+    const sessions: Session[] = [];
+    
+    sessionIds.forEach(id => {
+      const session = loadSession(id);
+      if (session) {
+        sessions.push(session);
+      }
+    });
+    
+    // Sort by creation date, newest first
+    return sessions.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+  return [];
+}
+
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }

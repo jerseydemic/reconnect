@@ -13,11 +13,12 @@ interface SwipeCardProps {
 
 export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }: SwipeCardProps) {
     const x = useMotionValue(0);
-    const rotate = useTransform(x, [-200, 200], [-25, 25]);
+    const rotate = useTransform(x, [-200, 200], [-15, 15]);
     const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
 
     const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (Math.abs(info.offset.x) > 100) {
+        // Reduced threshold for easier swiping on mobile
+        if (Math.abs(info.offset.x) > 80) {
             onSwipe(info.offset.x > 0 ? "right" : "left");
         }
     };
@@ -35,9 +36,9 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
     };
 
     return (
-        <div className="relative w-full max-w-md mx-auto h-[500px] perspective-1000">
+        <div className="relative w-full max-w-md mx-auto h-[420px] sm:h-[480px] md:h-[520px] perspective-1000 px-4 sm:px-0">
             <motion.div
-                className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
                 style={{
                     x,
                     rotate,
@@ -45,11 +46,12 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
                 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.7}
+                dragElastic={0.8}
+                dragTransition={{ bounceStiffness: 600, bounceDamping: 25 }}
                 onDragEnd={handleDragEnd}
-                whileTap={{ scale: 1.05 }}
+                whileTap={{ scale: 1.02 }}
             >
-                <div className="w-full h-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+                <div className="w-full h-full bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                     {/* Progress Bar */}
                     <div className="h-1 bg-gray-100">
                         <div
@@ -59,56 +61,56 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
                     </div>
 
                     {/* Card Content */}
-                    <div className="flex flex-col h-full p-8">
+                    <div className="flex flex-col h-full p-4 sm:p-6 md:p-8">
                         {/* Header */}
-                        <div className="text-center mb-6">
-                            <div className="flex items-center justify-center gap-2 mb-3">
+                        <div className="text-center mb-4 sm:mb-6">
+                            <div className="flex items-center justify-center gap-2 mb-2">
                                 <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${getCategoryColor(question.category)}`} />
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                                     {question.category.replace(/_/g, " ")}
                                 </p>
                                 <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${getCategoryColor(question.category)}`} />
                             </div>
-                            <p className="text-sm font-medium text-gray-400">
+                            <p className="text-xs sm:text-sm font-medium text-gray-400">
                                 {questionNumber} of {totalQuestions}
                             </p>
                         </div>
 
                         {/* Question */}
                         <div className="flex-1 flex items-center justify-center">
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center leading-relaxed px-4">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center leading-relaxed px-2 sm:px-4">
                                 {question.question}
                             </h2>
                         </div>
 
-                        {/* Swipe Indicators */}
-                        <div className="flex justify-between items-center mt-6">
-                            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-50 border-2 border-red-100">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-lg">
-                                    <X className="w-5 h-5 text-white" strokeWidth={3} />
+                        {/* Swipe Indicators - Compact for Mobile */}
+                        <div className="flex justify-between items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
+                            <div className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl bg-red-50 border-2 border-red-100 flex-1">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={3} />
                                 </div>
-                                <div className="text-left">
-                                    <p className="text-xs font-semibold text-red-600 uppercase tracking-wide">Swipe Left</p>
-                                    <p className="text-sm font-bold text-red-700">{question.leftLabel}</p>
+                                <div className="text-left min-w-0">
+                                    <p className="text-[10px] sm:text-xs font-semibold text-red-600 uppercase tracking-wide">Swipe Left</p>
+                                    <p className="text-xs sm:text-sm font-bold text-red-700 truncate">{question.leftLabel}</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50 border-2 border-green-100">
-                                <div className="text-right">
-                                    <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Swipe Right</p>
-                                    <p className="text-sm font-bold text-green-700">{question.rightLabel}</p>
+                            <div className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl bg-green-50 border-2 border-green-100 flex-1">
+                                <div className="text-right min-w-0">
+                                    <p className="text-[10px] sm:text-xs font-semibold text-green-600 uppercase tracking-wide">Swipe Right</p>
+                                    <p className="text-xs sm:text-sm font-bold text-green-700 truncate">{question.rightLabel}</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg">
-                                    <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={3} />
                                 </div>
                             </div>
                         </div>
 
                         {/* Instruction */}
-                        <div className="mt-6 text-center">
+                        <div className="mt-3 sm:mt-4 text-center">
                             <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
                                 <span className="inline-block">👆</span>
-                                Drag the card or swipe to answer
+                                Drag or swipe to answer
                             </p>
                         </div>
                     </div>
@@ -116,21 +118,21 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
 
                 {/* Drag Feedback Overlays */}
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-500 rounded-3xl flex items-center justify-center pointer-events-none"
+                    className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none"
                     style={{
                         opacity: useTransform(x, [-200, -50, 0], [0.9, 0.3, 0]),
                     }}
                 >
-                    <X className="w-32 h-32 text-white" strokeWidth={4} />
+                    <X className="w-24 h-24 sm:w-32 sm:h-32 text-white" strokeWidth={4} />
                 </motion.div>
 
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center pointer-events-none"
+                    className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none"
                     style={{
                         opacity: useTransform(x, [0, 50, 200], [0, 0.3, 0.9]),
                     }}
                 >
-                    <Check className="w-32 h-32 text-white" strokeWidth={4} />
+                    <Check className="w-24 h-24 sm:w-32 sm:h-32 text-white" strokeWidth={4} />
                 </motion.div>
             </motion.div>
         </div>

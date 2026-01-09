@@ -27,6 +27,7 @@ export interface Session {
     taskProgress: Record<number, boolean>;
     lastTaskUpdate?: string;
     createdAt: string;
+    userEmail?: string; // For session persistence and retrieval
 }
 
 export interface AnalysisResult {
