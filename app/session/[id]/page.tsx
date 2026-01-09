@@ -182,36 +182,7 @@ export default function SessionPage() {
         );
     }
 
-    // Partner 1 waiting for Partner 2 (skip for solo mode)
-    if (partner === "1" && !session.partner2Name && session.sessionType !== "solo") {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 flex items-center justify-center p-4">
-                <Card className="max-w-md w-full">
-                    <CardHeader>
-                        <CardTitle>Waiting for Partner</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <p className="text-gray-600">
-                            Share this code with your partner so they can join:
-                        </p>
-                        <div className="flex gap-2">
-                            <Input
-                                value={sessionId}
-                                readOnly
-                                className="text-2xl font-bold text-center tracking-wider"
-                            />
-                            <Button onClick={copySessionCode} variant="outline" size="icon">
-                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                            </Button>
-                        </div>
-                        <p className="text-sm text-gray-500 text-center">
-                            They can join at: <strong>reconnect.app</strong>
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    // Partner 1 can now start immediately - invite code shown in banner instead
 
     const currentQuestion = QUESTIONS[session.currentQuestionIndex];
     const progress = ((session.currentQuestionIndex) / QUESTIONS.length) * 100;
@@ -226,12 +197,36 @@ export default function SessionPage() {
                 <Button
                     onClick={() => router.push("/")}
                     variant="ghost"
-                    className="gap-2 text-gray-600 hover:text-gray-800"
+                    className="gap-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
                 >
                     <Home className="w-4 h-4" />
                     Back to Home
                 </Button>
             </div>
+
+            {/* Invite Code Banner for Partner 1 (if Partner 2 hasn't joined yet) */}
+            {partner === "1" && !session.partner2Name && session.sessionType !== "solo" && (
+                <Card className="mb-6 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200 dark:border-pink-800">
+                    <CardContent className="pt-4">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">
+                            Share this code with your partner:
+                        </p>
+                        <div className="flex gap-2">
+                            <Input
+                                value={sessionId}
+                                readOnly
+                                className="text-xl font-bold text-center tracking-wider bg-white dark:bg-gray-800"
+                            />
+                            <Button onClick={copySessionCode} variant="outline" size="icon">
+                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                            You can start answering questions now. Your partner can join anytime!
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Header */}
             <div className="text-center mb-6">
