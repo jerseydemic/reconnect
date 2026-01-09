@@ -1,3 +1,5 @@
+import { hashPassword } from "./utils";
+
 /**
  * Generate a random 6-digit verification code
  */
