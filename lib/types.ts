@@ -29,6 +29,20 @@ export interface Session {
     createdAt: string;
     userEmail?: string; // For session persistence and retrieval
     passwordHash?: string; // For session security
+    // Demographics for personalized advice
+    gender?: "male" | "female" | "non-binary" | "prefer-not-to-say";
+    age?: number;
+    location?: string; // City, State or Country
+    // Progress tracking
+    streak?: number; // Current streak in days
+    longestStreak?: number;
+    totalTasksCompleted?: number;
+    lastActivityDate?: string;
+    milestones?: string[]; // ["3_days", "7_days", etc.]
+    // AI preferences
+    useAITasks?: boolean;
+    aiTasksGenerated?: boolean;
+    lastAIGeneration?: string;
 }
 
 export interface AnalysisResult {
@@ -54,4 +68,14 @@ export interface HealingTask {
     why: string;
     completed: boolean;
     tier: "free" | "premium";
+}
+
+export interface JournalEntry {
+    id: string;
+    sessionId: string;
+    taskId?: number; // Optional link to task
+    content: string;
+    isPrivate: boolean; // If false, shared with partner
+    createdAt: string;
+    author: "partner1" | "partner2";
 }

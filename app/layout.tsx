@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,6 +15,9 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "ReConnect",
+  },
+  icons: {
+    apple: "/icon-192.png",
   },
   viewport: {
     width: "device-width",
@@ -28,16 +33,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#ec4899" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="ReConnect" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
-      <body className={inter.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <InstallPrompt />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

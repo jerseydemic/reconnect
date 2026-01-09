@@ -7,9 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Session, HealingTask } from "@/lib/types";
-import { loadSession, saveSession, calculateAnalysis } from "@/lib/utils";
+import { loadSession } from "@/lib/utils";
 import { HEALING_TASKS } from "@/lib/tasks";
-import { CheckCircle2, Circle, Heart, Home, TrendingUp, Sparkles, Lock } from "lucide-react";
+import { CheckCircle2, Circle, Heart, Home, Calendar, ChevronDown } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    generateAllTasksICS,
+    generateICSFile,
+    downloadICSFile,
+    getGoogleCalendarUrl,
+} from "@/lib/calendar-utils";
 
 export default function TasksPage() {
     const params = useParams();
@@ -59,6 +71,32 @@ export default function TasksPage() {
         );
     };
 
+    const handleAddAllToCalendar = (type: "google" | "ics") => {
+        const sessionName = `${session?.partner1Name} & ${session?.partner2Name}`;
+        
+        if (type === "google") {
+            // Google Calendar doesn't support multiple events in one URL
+            // So we'll download ICS file instead
+            const icsContent = generateAllTasksICS(tasks, sessionName);
+            downloadICSFile(icsContent, `reconnect-healing-tasks.ics`);
+        } else {
+            const icsContent = generateAllTasksICS(tasks, sessionName);
+            downloadICSFile(icsContent, `reconnect-healing-tasks.ics`);
+        }
+    };
+
+    const handleAddTaskToCalendar = (task: HealingTask, type: "google" | "ics") => {
+        const sessionName = `${session?.partner1Name} & ${session?.partner2Name}`;
+        
+        if (type === "google") {
+            const url = getGoogleCalendarUrl(task);
+            window.open(url, "_blank");
+        } else {
+            const icsContent = generateICSFile(task, sessionName);
+            downloadICSFile(icsContent, `reconnect-task-${task.id}.ics`);
+        }
+    };
+
     if (!session) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 flex items-center justify-center">
@@ -100,7 +138,28 @@ export default function TasksPage() {
                 {/* Progress */}
                 <Card className="shadow-xl">
                     <CardHeader>
-                        <CardTitle>Your Progress</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>Your Progress</CardTitle>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <Calendar className="w-4 h-4" />
+                                        Add All to Calendar
+                                        <ChevronDown className="w-4 h-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleAddAllToCalendar("google")}>
+                                        <Calendar className="w-4 h-4 mr-2" />
+                                        Google Calendar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleAddAllToCalendar("ics")}>
+                                        <Calendar className="w-4 h-4 mr-2" />
+                                        Apple/Outlook Calendar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
@@ -128,27 +187,45 @@ export default function TasksPage() {
                     {tasks.map((task) => (
                         <Card
                             key={task.id}
-                            className={`cursor-pointer transition-all ${task.completed ? "bg-green-50 border-green-200" : "hover:shadow-lg"
+                            className={`transition-all ${task.completed ? "bg-green-50 border-green-200" : "hover:shadow-lg"
                                 }`}
-                            onClick={() => toggleTask(task.id)}
                         >
                             <CardContent className="pt-6">
                                 <div className="flex items-start gap-4">
-                                    <div className="mt-1">
+                                    <div className="mt-1 cursor-pointer" onClick={() => toggleTask(task.id)}>
                                         {task.completed ? (
                                             <CheckCircle2 className="w-6 h-6 text-green-600" />
                                         ) : (
                                             <Circle className="w-6 h-6 text-gray-400" />
                                         )}
                                     </div>
-                                    <div className="flex-1 space-y-2">
+                                    <div className="flex-1 space-y-2 cursor-pointer" onClick={() => toggleTask(task.id)}>
                                         <div className="flex items-start justify-between gap-2">
                                             <h3 className={`font-semibold ${task.completed ? "line-through text-gray-500" : "text-gray-800"}`}>
                                                 {task.task}
                                             </h3>
-                                            <Badge className={getDifficultyColor(task.difficulty)}>
-                                                {task.difficulty}
-                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge className={getDifficultyColor(task.difficulty)}>
+                                                    {task.difficulty}
+                                                </Badge>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <Calendar className="w-4 h-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                        <DropdownMenuItem onClick={() => handleAddTaskToCalendar(task, "google")}>
+                                                            <Calendar className="w-4 h-4 mr-2" />
+                                                            Google Calendar
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleAddTaskToCalendar(task, "ics")}>
+                                                            <Calendar className="w-4 h-4 mr-2" />
+                                                            Apple/Outlook
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
                                         </div>
                                         <p className="text-sm text-gray-600">
                                             <strong>Why:</strong> {task.why}
