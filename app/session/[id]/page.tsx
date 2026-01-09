@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Session, Answer } from "@/lib/types";
 import { QUESTIONS } from "@/lib/questions";
 import { loadSession, saveSession } from "@/lib/utils";
-import { Copy, Check, Loader2, Undo2 } from "lucide-react";
+import { Copy, Check, Loader2, Undo2, Home } from "lucide-react";
 
 export default function SessionPage() {
     const params = useParams();
@@ -220,22 +220,34 @@ export default function SessionPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 p-4">
-            <div className="max-w-2xl mx-auto pt-8">
-                {/* Header */}
-                <div className="text-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                        {isSoloMode ? "Solo Assessment" : (partner === "1" ? session.partner1Name : session.partner2Name)}
-                    </h1>
-                    <p className="text-gray-600">
-                        {myAnswers.length} of {QUESTIONS.length} questions answered
+        <div className="max-w-2xl mx-auto pt-8">
+            {/* Back to Home Button */}
+            <div className="mb-4">
+                <Button
+                    onClick={() => router.push("/")}
+                    variant="ghost"
+                    className="gap-2 text-gray-600 hover:text-gray-800"
+                >
+                    <Home className="w-4 h-4" />
+                    Back to Home
+                </Button>
+            </div>
+
+            {/* Header */}
+            <div className="text-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    {isSoloMode ? "Solo Assessment" : (partner === "1" ? session.partner1Name : session.partner2Name)}
+                </h1>
+                <p className="text-gray-600">
+                    {myAnswers.length} of {QUESTIONS.length} questions answered
+                </p>
+                {isSoloMode && (
+                    <p className="text-sm text-purple-600 mt-1">
+                        Reflecting on your relationship independently
                     </p>
-                    {isSoloMode && (
-                        <p className="text-sm text-purple-600 mt-1">
-                            Reflecting on your relationship independently
-                        </p>
-                    )}
-                    <Progress value={progress} className="mt-4" />
-                </div>
+                )}
+                <Progress value={progress} className="mt-4" />
+            </div>
 
                 {/* Swipe Card */}
                 {currentQuestion && session.currentQuestionIndex < QUESTIONS.length && (
