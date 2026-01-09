@@ -9,10 +9,19 @@ import { Input } from "@/components/ui/input";
 import { generateSessionId, saveSession, validateEmail, hashPassword } from "@/lib/utils";
 import { Session } from "@/lib/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { 
+  generateVerificationCode, 
+  sendVerificationCode, 
+  storeVerificationCode, 
+  verifyCode, 
+  clearVerificationCode,
+  findSessionByEmail,
+  resetSessionPassword 
+} from "@/lib/password-reset";
 
 export default function Home() {
   const router = useRouter();
-  const [mode, setMode] = useState<"start" | "create" | "join" | "solo">("start");
+  const [mode, setMode] = useState<"start" | "create" | "join" | "solo" | "forgot-password">("start");
   const [partner1Name, setPartner1Name] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +31,13 @@ export default function Home() {
   const [gender, setGender] = useState<"male" | "female" | "non-binary" | "prefer-not-to-say" | "">("" );
   const [age, setAge] = useState("");
   const [location, setLocation] = useState("");
+  // Forgot password state
+  const [resetEmail, setResetEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [resetStep, setResetStep] = useState<"email" | "code" | "password">("email");
+  const [resetSessionId, setResetSessionId] = useState<string | null>(null);
 
   const handleCreateSession = async () => {
     if (!partner1Name.trim() || !userEmail.trim() || !password.trim() || !confirmPassword.trim()) return;
@@ -119,6 +135,71 @@ export default function Home() {
     router.push(`/session/${sessionCode.toUpperCase()}?partner=2`);
   };
 
+  const handleRequestResetCode = () => {
+    if (!resetEmail.trim()) return;
+    if (!validateEmail(resetEmail)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
+    // Find session by email
+    const sessionId = findSessionByEmail(resetEmail);
+    if (!sessionId) {
+      alert("No account found with this email address");
+      return;
+    }
+
+    // Generate and send verification code
+    const code = generateVerificationCode();
+    storeVerificationCode(resetEmail, code);
+    sendVerificationCode(resetEmail, code);
+    
+    setResetSessionId(sessionId);
+    setResetStep("code");
+  };
+
+  const handleVerifyCode = () => {
+    if (!verificationCode.trim()) return;
+
+    if (verifyCode(resetEmail, verificationCode)) {
+      setResetStep("password");
+    } else {
+      alert("Invalid or expired verification code");
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword.trim() || !confirmNewPassword.trim()) return;
+    
+    if (newPassword.length < 4) {
+      alert("Password must be at least 4 characters");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    if (!resetSessionId) return;
+
+    const success = await resetSessionPassword(resetSessionId, newPassword);
+    if (success) {
+      clearVerificationCode(resetEmail);
+      alert("Password reset successfully! You can now log in with your new password.");
+      // Reset state and go back to start
+      setMode("start");
+      setResetEmail("");
+      setVerificationCode("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setResetStep("email");
+      setResetSessionId(null);
+    } else {
+      alert("Failed to reset password. Please try again.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 dark:from-gray-900 dark:via-purple-900 dark:to-pink-900 p-4 flex items-center justify-center">
       <div className="w-full max-w-md">
@@ -146,6 +227,9 @@ export default function Home() {
               {mode === "create" && "Couple Assessment"}
               {mode === "join" && "Join Session"}
               {mode === "solo" && "Solo Assessment"}
+              {mode === "forgot-password" && resetStep === "email" && "Forgot Password"}
+              {mode === "forgot-password" && resetStep === "code" && "Enter Verification Code"}
+              {mode === "forgot-password" && resetStep === "password" && "Reset Password"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
