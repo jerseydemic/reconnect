@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useTransform, PanInfo, useAnimation } from "framer-motion";
+import { useEffect } from "react";
 import { Question } from "@/lib/types";
 import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,12 @@ export function SwipeCard({ question, onSwipe, questionNumber, totalQuestions }:
     const controls = useAnimation();
     const rotate = useTransform(x, [-300, 300], [-20, 20]);
     const opacity = useTransform(x, [-300, -150, 0, 150, 300], [0, 1, 1, 1, 0]);
+
+    // Reset card position when question changes
+    useEffect(() => {
+        x.set(0);
+        controls.set({ x: 0, opacity: 1, rotate: 0 });
+    }, [question.id, x, controls]);
 
     const handleDragEnd = async (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         const swipeThreshold = 100;
