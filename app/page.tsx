@@ -65,6 +65,7 @@ export default function Home() {
     };
 
     saveSession(newSession);
+    // Partner 1 starts their assessment immediately
     router.push(`/session/${sessionId}?partner=1`);
   };
 
