@@ -28,16 +28,30 @@ export default function MySessionsPage() {
     }
 
     setLoading(true);
+    setSessions([]); // Clear previous results
+    setSearched(false);
+    
     try {
       const userSessions = await getSessionsByEmailAndPassword(email, password);
       setSessions(userSessions);
       setSearched(true);
       
       if (userSessions.length === 0) {
-        alert("No sessions found. Please check your email and password.");
+        alert("No sessions found with these credentials. Please check your email and password.");
+      } else {
+        // Auto-scroll to results after a brief delay
+        setTimeout(() => {
+          const resultsElement = document.getElementById('sessions-results');
+          if (resultsElement) {
+            resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
       }
     } catch (error) {
+      console.error("Error retrieving sessions:", error);
       alert("Error retrieving sessions. Please try again.");
+      setSessions([]);
+      setSearched(false);
     } finally {
       setLoading(false);
     }
@@ -119,9 +133,14 @@ export default function MySessionsPage() {
 
         {/* Sessions List */}
         {searched && sessions.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Your Sessions ({sessions.length})
+          <div id="sessions-results" className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+              <p className="text-green-700 dark:text-green-300 font-medium text-center">
+                ✓ Found {sessions.length} session{sessions.length > 1 ? 's' : ''}!
+              </p>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+              Your Sessions
             </h2>
             {sessions.map((session) => (
               <Card
